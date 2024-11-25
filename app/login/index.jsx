@@ -4,14 +4,12 @@ import {
   View,
   Image,
   Pressable,
-  Alert,
   Modal,
   Dimensions,
   StyleSheet,
 } from 'react-native';
 import Colors from './../../constants/Colors';
 import * as WebBrowser from 'expo-web-browser';
-import { Link } from 'expo-router';
 import { useOAuth } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
 
@@ -40,18 +38,22 @@ export default function LoginScreen() {
     async (provider) => {
       setModalVisible(false);
       try {
-        const { createdSessionId } = await (provider === 'google'
-          ? startGoogleOAuthFlow({
-              redirectUrl: Linking.createURL('/(tabs)/home', { scheme: 'myapp' }),
-            })
-          : startFacebookOAuthFlow({
-              redirectUrl: Linking.createURL('/(tabs)/home', { scheme: 'myapp' }),
-            }));
+        const redirectUrl = Linking.createURL('/(tabs)/home', { scheme: 'myapp' });
+        console.log('Redirect URL generated:', redirectUrl);
+
+        const authResult = await (provider === 'google'
+          ? startGoogleOAuthFlow({ redirectUrl })
+          : startFacebookOAuthFlow({ redirectUrl }));
+
+        console.log('OAuth Flow Result:', authResult);
+
+        const { createdSessionId, userId, user } = authResult;
 
         if (createdSessionId) {
-          // Session created successfully
+          console.log(`${provider} session created successfully:`, createdSessionId);
+          console.log('User information:', user); // Aquí se imprime toda la información del usuario
         } else {
-          // Handle signIn or signUp for next steps such as MFA
+          console.log(`${provider} sign-in/sign-up needed`);
         }
       } catch (err) {
         console.error(`${provider} OAuth error`, err);
